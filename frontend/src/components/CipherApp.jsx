@@ -1,11 +1,30 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Link } from "react-router-dom";
+
+// Utility function to convert text to sentence case
+const toSentenceCase = (text) => {
+  if (!text) return "";
+  return text
+    .toLowerCase()
+    .replace(/(^\s*\w|[.!?]\s*\w)/g, (c) => c.toUpperCase())
+    .replace(/\s+/g, " ")
+    .trim();
+};
 
 export default function CipherApp() {
   const [playerPhrase, setPlayerPhrase] = useState("");
   const [encryptedMessage, setEncryptedMessage] = useState("");
   const [decodedMessage, setDecodedMessage] = useState("");
+  const [displayedWords, setDisplayedWords] = useState([]);
   const [error, setError] = useState("");
+  const [isInputVisible, setIsInputVisible] = useState(true); // Track input visibility
+  const [transitionState, setTransitionState] = useState("visible"); // Track animation state
+  const inputRef = useRef(null);
+
+/*   useEffect(() => {
+    if (!inputRef.current.focus()) return;
+    inputRef.current.focus();
+  }, [inputRef.current]); */
 
   // Fetch the encrypted message when the component loads
   useEffect(() => {
@@ -21,48 +40,86 @@ export default function CipherApp() {
     fetchMessage();
   }, []);
 
-  // Attempt to decode the message
-  const attemptDecode = async () => {
-    try {
-      const response = await fetch("http://localhost:5000/decrypt", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ phrase: playerPhrase }),
-      });
+  // Handle form submission (Enter key or button click)
+  const handleSubmit = async (e) => {
+    if (e.key === "Enter") {
+      e.preventDefault();
+      if (!playerPhrase.trim()) return; // Prevent empty submissions
 
-      const data = await response.json();
-      setDecodedMessage(data.decryptedMessage);
-    } catch (err) {
-      setDecodedMessage("Error decoding message.");
+      // Start fade-out animation
+      setTransitionState("fading");
+      setTimeout(() => {
+        setIsInputVisible(false); // Hide input after fade-out
+        setTransitionState("hidden");
+
+        // Decode and animate word-by-word
+        setTimeout(async () => {
+          try {
+            const response = await fetch("http://localhost:5000/decrypt", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ phrase: playerPhrase }),
+            });
+
+            const data = await response.json();
+            const formattedMessage = toSentenceCase(data.decryptedMessage);
+            setDecodedMessage(formattedMessage);
+
+            // Split the message into words and animate
+            const words = formattedMessage.split(" ");
+            setDisplayedWords([]); // Reset displayed words
+            words.forEach((word, index) => {
+              setTimeout(() => {
+                setDisplayedWords((prev) => [...prev, word]);
+              }, index * 500); // 500ms delay between each word
+            });
+          } catch (err) {
+            setDecodedMessage("Error decoding message.");
+            setDisplayedWords(["Error", "decoding", "message."]);
+          }
+        }, 500); // Delay to allow fade-out to finish
+      }, 1000); // Match the fadeOut animation duration (1s)
     }
   };
 
   return (
-    <div style={{ maxWidth: "500px", margin: "auto", textAlign: "center", padding: "20px" }}>
-      <h2>Magical Cipher Scroll</h2>
+    <div className="cipher-app-container">
+      {/* Instructions to the left */}
+      <div className="instructions">
+        <h2>Magical Cipher Scroll</h2>
+        <p>
+          Welcome, brave adventurer! A mystical scroll lies before you, its secrets locked by an ancient cipher.
+          To reveal its hidden message, scribe your secret passphrase upon the parchment below.
+          When you are ready, press Enter to unleash the magic.
+        </p>
+        {error && <p style={{ color: "red" }}>{error}</p>}
+      </div>
 
-      {error ? <p style={{ color: "red" }}>{error}</p> : <p></p>}
+      {/* Scroll area */}
+      <div className="scroll-container">
+        {isInputVisible ? (
+          <form onKeyDown={handleSubmit} className={`scroll-input-form ${transitionState}`}>
+            <input
+              ref={inputRef}
+              type="text"
+              value={playerPhrase}
+              onChange={(e) => setPlayerPhrase(e.target.value)}
+              placeholder="Write your passphrase..."
+              className="scroll-input"
+            />
+          </form>
+        ) : (
+          <div className="scroll-output">
+            {displayedWords.map((word, index) => (
+              <span key={index} className="arcane-word">
+                {word}{" "}
+              </span>
+            ))}
+            <button className="try-again-button" onClick={() => window.location.reload()}>Try Again</button>
+          </div>
 
-      <label>Enter Secret Words to Decode:</label>
-      <input
-        type="text"
-        value={playerPhrase}
-        onChange={(e) => setPlayerPhrase(e.target.value)}
-        placeholder="Enter secret words..."
-        style={{ width: "100%", padding: "8px", margin: "10px 0" }}
-      />
-
-      <button onClick={attemptDecode} style={{ padding: "10px", cursor: "pointer" }}>
-        Decode Message
-      </button>
-
-      <h3>Decryption Output:</h3>
-      <p style={{ border: "1px solid #ccc", padding: "10px", minHeight: "50px" }}>
-        {decodedMessage}
-      </p>
+        )}
+      </div>
     </div>
   );
 }
-//TODO: Add formatting to the correct output phrase so that it has proper capitalization.
-//TODO: Make it a greek mechanical computer style decoder
-//TODO: Need scroll and cipher wheel

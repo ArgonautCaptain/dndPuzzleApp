@@ -1,42 +1,210 @@
-#root {
-  max-width: 1280px;
-  margin: 0 auto;
-  padding: 2rem;
+@import url('https://fonts.googleapis.com/css2?family=Great+Vibes&display=swap');
+
+body {
+  margin: 0;
+  padding: 0;
+  height: 100vh;
+  overflow: hidden;
+  background-color: #000;
+}
+
+.footer {
+  position: fixed;
+  bottom: 0;
+  width: 100%;
+  background: rgba(0, 0, 0, 0);
+  color: #d9c79a;
   text-align: center;
+  padding: 10px;
+  font-family: "Georgia", serif;
 }
 
-.logo {
-  height: 6em;
-  padding: 1.5em;
-  will-change: filter;
-  transition: filter 300ms;
-}
-.logo:hover {
-  filter: drop-shadow(0 0 2em #646cffaa);
-}
-.logo.react:hover {
-  filter: drop-shadow(0 0 2em #61dafbaa);
+.footer a {
+  color: #d9c79a;
 }
 
-@keyframes logo-spin {
-  from {
-    transform: rotate(0deg);
+.cipher-app-container {
+  display: flex;
+  height: 100vh;
+  width: 100vw;
+  background: url("../scroll-image.png") no-repeat center center fixed;
+  background-size: cover;
+}
+
+/* Instructions on the left */
+.instructions {
+  width: 20%;
+  padding: 20px;
+  background: rgba(0, 0, 0, 0.5);
+  /* Semi-transparent background for readability */
+  color: #d9c79a;
+  /* Parchment-like text color */
+  font-family: "Georgia", serif;
+  overflow-y: auto;
+  /* center contents vertically */
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+.instructions h2 {
+  font-family: "Great Vibes", cursive;
+  font-size: 2.5em;
+  color: #f4e4bc;
+}
+
+.instructions p {
+  font-size: 1.1em;
+  line-height: 1.6;
+}
+
+/* Scroll area (center-right) */
+.scroll-container {
+  position: fixed;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  width: 95vw;
+  height: 100vh;
+  flex: 1;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+/* Input styling */
+.scroll-input-form {
+  width: 35%;
+  transform: translateY(-20vh);
+
+}
+
+.scroll-input {
+  background: transparent;
+  border: none;
+  outline: none;
+  color: #000;
+  /* Black text */
+  font-family: "Great Vibes", cursive;
+  font-size: 4em;
+  text-align: left;
+  vertical-align: top;
+}
+
+.scroll-input::placeholder {
+  color: #555;
+  opacity: 0.7;
+}
+
+.scroll-input.fade-out {
+  animation: fadeOut 1s forwards;
+}
+
+/* Output styling */
+.scroll-output {
+  position: relative;
+  padding: 20px;
+  width: 35%;
+  min-height: 500px;
+  text-align: left;
+  vertical-align: top;
+  background: linear-gradient(to right bottom,
+      #003bfc 0%,
+      #003bfc 30%,
+      #9ae1ff 47.5%,
+      #65a0b9 52.5%,
+      #003bfc 55%,
+      #003bfc 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-size: 500% 500%;
+  animation: textShine 5s ease-in-out infinite;
+}
+
+/* Arcane glowing text */
+.arcane-word {
+  color: #84cadd;
+  font-family: "Great Vibes", cursive;
+  font-size: 4em;
+  animation: shimmer 5s infinite;
+}
+
+@keyframes textShine {
+  0% {
+    background-position: 100% 100%;
   }
+
+  100% {
+    background-position: 0% 0%;
+  }
+}
+
+/* Shimmer animation */
+@keyframes shimmer {
+  0% {
+    text-shadow: 0 0 30px #65a0b9, 0 0 20px #65a0b9, 0 0 40px #65a0b9;
+  }
+
+  50% {
+    text-shadow: 0 0 50px #00e1ff, 0 0 40px #00e1ff, 0 0 60px #00e1ff;
+  }
+
+  100% {
+    text-shadow: 0 0 30px #65a0b9, 0 0 20px #65a0b9, 0 0 40px #65a0b9;
+  }
+}
+
+/* Fade-in animation */
+@keyframes fadeIn {
   to {
-    transform: rotate(360deg);
+    opacity: 1;
   }
 }
 
-@media (prefers-reduced-motion: no-preference) {
-  a:nth-of-type(2) .logo {
-    animation: logo-spin infinite 20s linear;
+/* Fade-out animation for input */
+@keyframes fadeOut {
+  to {
+    opacity: 0;
   }
 }
 
-.card {
-  padding: 2em;
+.try-again-button {
+  opacity: 0;
+  position: absolute;
+  bottom: 0;
+  right: 0;
+  background: #00000000;
+  -webkit-text-fill-color: #000;
+  color: #000;
+  font-family: "Great Vibes", cursive;
+  font-size: 2.5em;
+  padding: 10px 20px;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  margin-top: 20px;
+  animation: fadeIn 2.5s forwards;
+  animation-delay: 5s;
 }
 
-.read-the-docs {
-  color: #888;
+/* Scroll content container */
+.scroll-input-form {
+  transition: opacity 1s ease;
+  /* Smooth fade transition */
+}
+
+.scroll-input-form.fading {
+  opacity: 1;
+  /* Start fully visible */
+}
+
+.scroll-input-form.fading .scroll-input {
+  animation: fadeOut 1s forwards;
+  /* Trigger fade-out animation */
+}
+
+.scroll-input-form.hidden {
+  opacity: 0;
+  /* Hidden after fade-out */
 }
