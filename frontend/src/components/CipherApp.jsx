@@ -21,10 +21,24 @@ export default function CipherApp() {
   const [transitionState, setTransitionState] = useState("visible"); // Track animation state
   const inputRef = useRef(null);
 
-/*   useEffect(() => {
+  const InputForm = () => (
+    <form onKeyDown={handleSubmit} className={`scroll-input-form ${transitionState}`}>
+      <input
+        ref={inputRef}
+        type="text"
+        value={playerPhrase}
+        onChange={(e) => setPlayerPhrase(e.target.value)}
+        onLoad={() => inputRef.current.focus()}
+        placeholder="Write your passphrase..."
+        className="scroll-input"
+      />
+    </form>
+  );
+
+  useEffect(() => {
     if (!inputRef.current.focus()) return;
     inputRef.current.focus();
-  }, [inputRef.current]); */
+  }, [InputForm]);
 
   // Fetch the encrypted message when the component loads
   useEffect(() => {
@@ -88,8 +102,8 @@ export default function CipherApp() {
       <div className="instructions">
         <h2>Magical Cipher Scroll</h2>
         <p>
-          Welcome, brave adventurer! A mystical scroll lies before you, its secrets locked by an ancient cipher.
-          To reveal its hidden message, scribe your secret passphrase upon the parchment below.
+          Welcome, brave adventurer! A mystical scroll lies before you, its secrets locked by an arcane cipher.
+          To reveal its hidden message, scribe the passphrase upon the parchment below.
           When you are ready, press Enter to unleash the magic.
         </p>
         {error && <p style={{ color: "red" }}>{error}</p>}
@@ -98,16 +112,7 @@ export default function CipherApp() {
       {/* Scroll area */}
       <div className="scroll-container">
         {isInputVisible ? (
-          <form onKeyDown={handleSubmit} className={`scroll-input-form ${transitionState}`}>
-            <input
-              ref={inputRef}
-              type="text"
-              value={playerPhrase}
-              onChange={(e) => setPlayerPhrase(e.target.value)}
-              placeholder="Write your passphrase..."
-              className="scroll-input"
-            />
-          </form>
+          <InputForm />
         ) : (
           <div className="scroll-output">
             {displayedWords.map((word, index) => (
@@ -115,11 +120,16 @@ export default function CipherApp() {
                 {word}{" "}
               </span>
             ))}
+            <input
+              className="invisible-input"
+              ref={inputRef}
+              >
+            </input>
             <button className="try-again-button" onClick={() => window.location.reload()}>Try Again</button>
           </div>
 
         )}
       </div>
-    </div>
+    </div >
   );
 }

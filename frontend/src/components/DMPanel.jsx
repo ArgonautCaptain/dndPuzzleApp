@@ -53,7 +53,7 @@ export default function DMPanel() {
   };
 
   return (
-    <div style={{ maxWidth: "400px", margin: "auto", textAlign: "center", padding: "20px" }}>
+    <div style={{ maxWidth: "400px", margin: "auto", textAlign: "center", padding: "20px", color: "white" }}>
       <h2>DM Control Panel</h2>
 
       <label>Set Secret Phrase (Can be anything):</label>

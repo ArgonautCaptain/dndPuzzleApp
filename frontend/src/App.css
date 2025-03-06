@@ -124,11 +124,29 @@ body {
 
 /* Arcane glowing text */
 .arcane-word {
-  color: #84cadd;
   font-family: "Great Vibes", cursive;
   font-size: 4em;
   animation: shimmer 5s infinite;
 }
+
+/* .arcane-word-container {
+  box-shadow: 0 0 30px #00e1ff 0 0 20px #00e1ff, 0 0 40px #00e1ff;
+  border-radius: 20px;
+  background: #65a0b9;
+  padding: 20px;
+  animation: backgroundFade 2.5s forwards;
+}
+
+@keyframes backgroundFade {
+  0% {
+    background: #00e1ff;
+  }
+
+  100% {
+    background: #65a0b900;
+    box-shadow: none;
+  }
+} */
 
 @keyframes textShine {
   0% {
@@ -143,6 +161,10 @@ body {
 /* Shimmer animation */
 @keyframes shimmer {
   0% {
+    text-shadow: 0 0 30px #65a0b977, 0 0 20px #65a0b977, 0 0 40px #65a0b977;
+  }
+
+  25% {
     text-shadow: 0 0 30px #65a0b9, 0 0 20px #65a0b9, 0 0 40px #65a0b9;
   }
 
@@ -150,8 +172,12 @@ body {
     text-shadow: 0 0 50px #00e1ff, 0 0 40px #00e1ff, 0 0 60px #00e1ff;
   }
 
-  100% {
+  75% {
     text-shadow: 0 0 30px #65a0b9, 0 0 20px #65a0b9, 0 0 40px #65a0b9;
+  }
+
+  100% {
+    text-shadow: 0 0 30px #65a0b977, 0 0 20px #65a0b977, 0 0 40px #65a0b977;
   }
 }
 
@@ -207,4 +233,8 @@ body {
 .scroll-input-form.hidden {
   opacity: 0;
   /* Hidden after fade-out */
+}
+
+.invisible-input {
+  visibility: hidden;
 }
