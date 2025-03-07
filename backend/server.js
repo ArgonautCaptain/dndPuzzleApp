@@ -11,7 +11,7 @@ app.use(cors());
 app.use(express.json());
 
 // Load the common words list
-const commonWordsPath = path.join(__dirname, "common.json");
+const commonWordsPath = path.join(__dirname, "dnd-words-updated.json");
 const commonWordsData = fs.readFileSync(commonWordsPath, "utf8");
 const commonWords = JSON.parse(commonWordsData).commonWords; // Fix: Ensure correct key
 const commonWordsSet = new Set(commonWords.map(word => word.toLowerCase())); // Convert to lowercase for accuracy

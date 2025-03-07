@@ -164,15 +164,15 @@ body {
     text-shadow: 0 0 30px #65a0b977, 0 0 20px #65a0b977, 0 0 40px #65a0b977;
   }
 
-  25% {
+  20% {
     text-shadow: 0 0 30px #65a0b9, 0 0 20px #65a0b9, 0 0 40px #65a0b9;
   }
 
-  50% {
+  35% {
     text-shadow: 0 0 50px #00e1ff, 0 0 40px #00e1ff, 0 0 60px #00e1ff;
   }
 
-  75% {
+  50% {
     text-shadow: 0 0 30px #65a0b9, 0 0 20px #65a0b9, 0 0 40px #65a0b9;
   }
 

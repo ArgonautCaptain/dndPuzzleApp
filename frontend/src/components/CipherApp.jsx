@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from "react";
-import { Link } from "react-router-dom";
+import { animate } from "motion"
+import { motion } from "motion/react";
 
 // Utility function to convert text to sentence case
 const toSentenceCase = (text) => {
@@ -116,14 +117,20 @@ export default function CipherApp() {
         ) : (
           <div className="scroll-output">
             {displayedWords.map((word, index) => (
-              <span key={index} className="arcane-word">
+              <motion.span
+                key={index}
+                className="arcane-word"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ duration: 1 }}
+              >
                 {word}{" "}
-              </span>
+              </motion.span>
             ))}
             <input
               className="invisible-input"
               ref={inputRef}
-              >
+            >
             </input>
             <button className="try-again-button" onClick={() => window.location.reload()}>Try Again</button>
           </div>
