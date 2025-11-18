@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from "react";
 import { animate } from "motion"
 import { motion } from "motion/react";
+import api from "../api/apiClient";
 
 // Utility function to convert text to sentence case
 const toSentenceCase = (text) => {
@@ -45,10 +46,10 @@ export default function CipherApp() {
   useEffect(() => {
     const fetchMessage = async () => {
       try {
-        const response = await fetch("http://localhost:5000/get-message");
-        const data = await response.json();
-        setEncryptedMessage(data.encryptedMessage);
+        const response = await api.get("/get-message");
+        setEncryptedMessage(response.data.encryptedMessage);
       } catch (err) {
+        console.error("Error fetching message:", err);
         setError("No message set yet.");
       }
     };
@@ -70,25 +71,24 @@ export default function CipherApp() {
         // Decode and animate word-by-word
         setTimeout(async () => {
           try {
-            const response = await fetch("http://localhost:5000/decrypt", {
-              method: "POST",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({ phrase: playerPhrase }),
+            const response = await api.post("/decrypt", {
+              phrase: playerPhrase,
             });
 
-            const data = await response.json();
-            const formattedMessage = toSentenceCase(data.decryptedMessage);
+            const formattedMessage = toSentenceCase(
+              response.data.decryptedMessage
+            );
             setDecodedMessage(formattedMessage);
 
-            // Split the message into words and animate
             const words = formattedMessage.split(" ");
-            setDisplayedWords([]); // Reset displayed words
+            setDisplayedWords([]);
             words.forEach((word, index) => {
               setTimeout(() => {
                 setDisplayedWords((prev) => [...prev, word]);
-              }, index * 500); // 500ms delay between each word
+              }, index * 500);
             });
           } catch (err) {
+            console.error("Error decoding message:", err);
             setDecodedMessage("Error decoding message.");
             setDisplayedWords(["Error", "decoding", "message."]);
           }

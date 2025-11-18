@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import api from "../api/apiClient";
 
 export default function DMPanel() {
   const [secretPhrase, setSecretPhrase] = useState("");
@@ -15,14 +16,8 @@ export default function DMPanel() {
 
     const validateMessage = async () => {
       try {
-        const response = await fetch("http://localhost:5000/validate-message", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ message }),
-        });
-
-        const data = await response.json();
-        setInvalidWords(data.invalidWords || []);
+        const response = await api.post("/validate-message", { message });
+        setInvalidWords(response.data.invalidWords || []);
       } catch (error) {
         console.error("Validation error:", error);
       }
@@ -39,15 +34,14 @@ export default function DMPanel() {
     }
 
     try {
-      const response = await fetch("http://localhost:5000/set-message", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ phrase: secretPhrase, message }),
+      const response = await api.post("/set-message", {
+        phrase: secretPhrase,
+        message,
       });
 
-      const data = await response.json();
-      setStatus(data.message);
+      setStatus(response.data.message);
     } catch (error) {
+      console.error("Set message error:", error);
       setStatus("Error setting message.");
     }
   };
