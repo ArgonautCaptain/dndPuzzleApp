@@ -9,7 +9,7 @@ but beware — entering the **wrong phrase** will still decode the scroll using 
 
 Perfect for immersive puzzles, mystery arcs, ancient prophecies, or cryptic tomes discovered deep within forgotten ruins.
 
-[Home](./screenshots/home.png)
+![Home](./screenshots/home.png)
 
 ---
 
@@ -127,8 +127,10 @@ This app is battle-tested in a long-running D&D campaign and has proven to be on
    - `"wyrmsong"` → *Incorrect output*  
    - `"dragonfire"` → *Correct — true message revealed*  
 
+   Incorrect Passphrase Example:
    ![Wrong Passphrase](./screenshots/incorrect.gif)
 
+   Correct Passphrase Example:
    ![Correct Passphrase](./screenshots/correct.gif)
 
 Each wrong passphrase creates a convincing alternate message, making the puzzle feel alive and magical.
