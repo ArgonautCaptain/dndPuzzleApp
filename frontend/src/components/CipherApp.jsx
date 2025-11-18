@@ -104,7 +104,7 @@ export default function CipherApp() {
         <h2>Magical Cipher Scroll</h2>
         <p>
           Welcome, brave adventurer! A mystical scroll lies before you, its secrets locked by an arcane cipher.
-          To reveal its hidden message, scribe the passphrase upon the parchment below.
+          To reveal its hidden message, scribe the passphrase upon the parchment.
           When you are ready, press Enter to unleash the magic.
         </p>
         {error && <p style={{ color: "red" }}>{error}</p>}
