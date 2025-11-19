@@ -85,7 +85,7 @@ Instead, every incorrect guess generates a *plausible output* using your curated
 
 ---
 
-## 🚀 Live Demo (if deployed)
+## 🚀 Live Demo
 > https://dndpuzzleapp-g577.onrender.com/
 
 ---
