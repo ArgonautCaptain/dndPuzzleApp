@@ -3,12 +3,17 @@ const express = require("express");
 const cors = require("cors");
 const fs = require("fs");
 const path = require("path");
+const createDmAuth = require("./dmAuth");
 
 const app = express();
 const PORT = process.env.PORT || 5000;
 
 app.use(cors());
 app.use(express.json());
+const dmAuth = createDmAuth(process.env.DM_PASSWORD);
+app.post("/dm/login", dmAuth.login);
+app.get("/dm/session", dmAuth.requireDm, (req, res) => res.sendStatus(204));
+app.post("/dm/logout", dmAuth.requireDm, dmAuth.logout);
 
 //load common words safely
 let commonWords = [];
@@ -52,7 +57,7 @@ let encryptedMessage = null;
 let wordMap = {}; // Stores the word substitution mapping
 
 // API to check if words in the MESSAGE are valid
-app.post("/validate-message", (req, res) => {
+app.post("/validate-message", dmAuth.requireDm, (req, res) => {
   const { message } = req.body;
   if (!message) return res.status(400).json({ error: "No message provided." });
 
@@ -111,7 +116,7 @@ const decryptMessage = (message) => {
 };
 
 // API to set the encrypted message and secret phrase
-app.post("/set-message", (req, res) => {
+app.post("/set-message", dmAuth.requireDm, (req, res) => {
   const { phrase, message } = req.body;
   if (!phrase || !message) {
     return res
@@ -183,6 +188,10 @@ app.post("/decrypt", (req, res) => {
   }
 });
 
-app.listen(PORT, () => {
-  console.log('Puzzle Backend is running on port', PORT);
-});
+if (require.main === module) {
+  app.listen(PORT, () => {
+    console.log('Puzzle Backend is running on port', PORT);
+  });
+}
+
+module.exports = app;

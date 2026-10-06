@@ -1,4 +1,4 @@
-import { BrowserRouter as Router, Routes, Route, Link } from "react-router-dom";
+import { Routes, Route, Link } from "react-router-dom";
 import CipherApp from "./components/CipherApp";
 import DMPanel from "./components/DMPanel";
 //import styles from ./App.css
@@ -13,7 +13,8 @@ function App() {
       </Routes>
       <div className="footer">
         <nav>
-          <Link to="/">Player Page</Link> | <Link to="/dm">DM Panel</Link>
+          <Link to="/">Player Page</Link>
+          {import.meta.env.VITE_SHOW_DM_LINK === "true" && <> | <Link to="/dm">DM Panel</Link></>}
         </nav>
       </div>
     </div>

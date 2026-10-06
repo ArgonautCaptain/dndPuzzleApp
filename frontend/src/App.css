@@ -23,6 +23,22 @@ body {
   color: #d9c79a;
 }
 
+.dm-panel {
+  box-sizing: border-box;
+  max-width: 400px;
+  margin: auto;
+  padding: 20px;
+  text-align: center;
+  color: white;
+}
+
+.dm-panel input {
+  box-sizing: border-box;
+  width: 100%;
+  padding: 8px;
+  margin: 10px 0;
+}
+
 .cipher-app-container {
   display: flex;
   height: 100vh;

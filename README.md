@@ -139,7 +139,33 @@ Each wrong passphrase creates a convincing alternate message, making the puzzle 
 
 ## 💬 Want to Use This in Your Own Campaign?
 
-### NOTE: This repo is for demo purposes, and as such the DM Panel has *NOT* been password protected. 
+### DM panel access
+
+The player page hides the DM link by default. Visit `/dm` directly to unlock the
+panel with a separate DM password. The backend also requires an authenticated
+session for message validation and saving, so direct API requests cannot bypass
+the panel lock.
+
+1. Copy `backend/.env.example` to `backend/.env` and set `DM_PASSWORD` to a private
+   password. On a hosted backend such as Render, set `DM_PASSWORD` in the service's
+   environment settings instead. Restart the backend after changing it.
+2. Start the backend from its directory with `node server.js` and start the
+   frontend from its directory with `npm run dev`.
+3. Open `/dm`, enter the DM password, and create the puzzle as usual. The DM
+   password is separate from the arcane phrase players use to decode the scroll.
+4. Use **Lock panel** before giving players access to your browser. Refreshing or
+   leaving the DM page also clears its local access and unsaved fields. Sessions
+   expire after eight hours and are invalidated when the backend restarts.
+
+Without `DM_PASSWORD`, DM login and write access are disabled. Keep this password
+on the backend; never put it in a `VITE_` environment variable or frontend code.
+Use HTTPS when hosting the app. Failed login attempts are limited to ten per
+15-minute window per IP as seen by Express (a reverse proxy may share this limit
+across visitors).
+
+If you want a visible DM navigation link, set `VITE_SHOW_DM_LINK=true` in the
+frontend environment and restart Vite or rebuild the frontend. The password is
+still required whether the link is visible or hidden.
 
 Clone the repo, customize the dictionary, adjust the UI, or integrate it with other DM tools — it’s designed to be modular, lightweight, and easily themeable.
 
