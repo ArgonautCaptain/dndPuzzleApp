@@ -118,10 +118,14 @@ const decryptMessage = (message) => {
 // API to set the encrypted message and secret phrase
 app.post("/set-message", dmAuth.requireDm, (req, res) => {
   const { phrase, message } = req.body;
-  if (!phrase || !message) {
+  if (typeof phrase !== "string" || !phrase.trim() || !message) {
     return res
       .status(400)
       .json({ error: "Secret phrase and message are required." });
+  }
+
+  if (phrase !== phrase.toLowerCase()) {
+    return res.status(400).json({ error: "Secret phrase must use lowercase letters." });
   }
 
   if (commonWordsSet.size === 0) {
@@ -157,11 +161,11 @@ app.get("/get-message", (req, res) => {
 // API to attempt decryption
 app.post("/decrypt", (req, res) => {
   const { phrase } = req.body;
-  if (!phrase || !secretPhrase || !encryptedMessage) {
+  if (typeof phrase !== "string" || !phrase.trim() || !secretPhrase || !encryptedMessage) {
     return res.status(400).json({ error: "Missing data for decryption." });
   }
 
-  const inputPhrase = phrase.split(" ");
+  const inputPhrase = phrase.toLowerCase().split(" ");
   const isCorrect =
     JSON.stringify(inputPhrase) === JSON.stringify(secretPhrase);
 

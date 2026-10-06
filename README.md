@@ -155,6 +155,10 @@ the panel lock.
    frontend from its directory with `npm run dev`.
 3. Open `/dm`, enter the DM password, and create the puzzle as usual. The DM
    password is separate from the arcane phrase players use to decode the scroll.
+   Arcane phrases must be entered in lowercase by the DM. Player guesses ignore
+   letter case: `moon song`, `Moon Song`, and `MOON SONG` decode the same puzzle.
+   Spaces, numbers, and punctuation are allowed in the phrase. The DM login
+   password remains case sensitive.
 4. Use **Lock panel** before giving players access to your browser. Refreshing or
    leaving the DM page also clears its local access and unsaved fields. Sessions
    expire after eight hours and are invalidated when the backend restarts.

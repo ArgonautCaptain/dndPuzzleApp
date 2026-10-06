@@ -72,7 +72,7 @@ export default function CipherApp() {
         setTimeout(async () => {
           try {
             const response = await api.post("/decrypt", {
-              phrase: playerPhrase,
+              phrase: playerPhrase.toLowerCase(),
             });
 
             const formattedMessage = toSentenceCase(

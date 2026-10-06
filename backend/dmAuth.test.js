@@ -42,6 +42,24 @@ test("DM API protection, login, logout, and public puzzle decoding", async (t) =
   const decoded = await request("/decrypt", { phrase: "arcane" });
   assert.equal(decoded.status, 200);
   assert.equal(decoded.data.decryptedMessage, "the");
+  for (const phrase of ["ARCANE", "ArCaNe"]) {
+    const result = await request("/decrypt", { phrase });
+    assert.equal(result.status, 200);
+    assert.equal(result.data.decryptedMessage, "the");
+  }
+  for (const phrase of ["Arcane", "ARCANE", "arcane Moon"]) {
+    const rejected = await request("/set-message", { phrase, message: "the" }, token);
+    assert.equal(rejected.status, 400);
+    assert.equal(rejected.data.error, "Secret phrase must use lowercase letters.");
+  }
+  // Rejecting an invalid DM phrase must preserve the active puzzle.
+  assert.equal((await request("/decrypt", { phrase: "ARCANE" })).data.decryptedMessage, "the");
+  for (const phrase of ["", "   ", 123]) {
+    assert.equal((await request("/set-message", { phrase, message: "the" }, token)).status, 400);
+    assert.equal((await request("/decrypt", { phrase })).status, 400);
+  }
+  assert.equal((await request("/set-message", { phrase: "moon song 42!", message: "the" }, token)).status, 200);
+  assert.equal((await request("/decrypt", { phrase: "MoOn SoNg 42!" })).data.decryptedMessage, "the");
   assert.equal((await request("/decrypt", { phrase: "wrong" })).status, 200);
   assert.equal((await request("/dm/logout", {}, token)).status, 204);
   assert.equal((await request("/set-message", { phrase: "arcane", message: "the" }, token)).status, 401);
