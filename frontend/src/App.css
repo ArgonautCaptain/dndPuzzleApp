@@ -3,8 +3,8 @@
 body {
   margin: 0;
   padding: 0;
-  height: 100vh;
-  overflow: hidden;
+  min-height: 100vh;
+  overflow-x: hidden;
   background-color: #000;
 }
 
@@ -40,16 +40,17 @@ body {
 }
 
 .cipher-app-container {
-  display: flex;
-  height: 100vh;
-  width: 100vw;
-  background: url("../scroll-image.png") no-repeat center center fixed;
-  background-size: cover;
+  display: grid;
+  grid-template-columns: minmax(180px, 22%) minmax(0, 1fr);
+  align-items: center;
+  min-height: 100svh;
+  box-sizing: border-box;
+  padding-bottom: 48px;
 }
 
 /* Instructions on the left */
 .instructions {
-  width: 20%;
+  box-sizing: border-box;
   padding: 20px;
   background: rgba(0, 0, 0, 0.5);
   /* Semi-transparent background for readability */
@@ -76,33 +77,39 @@ body {
 
 /* Scroll area (center-right) */
 .scroll-container {
-  position: fixed;
-  top: 0;
-  right: 0;
-  bottom: 0;
-  width: 95vw;
-  height: 100vh;
-  flex: 1;
-  display: flex;
-  justify-content: center;
-  align-items: center;
+  position: relative;
+  width: 100%;
+  aspect-ratio: 1456 / 816;
+  container-type: inline-size;
+  background: url("/scroll-image.png") no-repeat center / cover;
 }
 
 /* Input styling */
 .scroll-input-form {
+  position: absolute;
+  top: 20%;
+  left: 35%;
   width: 35%;
-  transform: translateY(-20vh);
-
+  height: 53%;
+  margin: 0;
 }
 
 .scroll-input {
+  box-sizing: border-box;
+  width: 100%;
+  height: 100%;
+  padding: 4px;
+  resize: none;
+  overflow: auto;
+  overflow-wrap: anywhere;
   background: transparent;
   border: none;
   outline: none;
   color: #000;
   /* Black text */
   font-family: "Great Vibes", cursive;
-  font-size: 4em;
+  font-size: clamp(1.25rem, 3.5cqw, 3rem);
+  line-height: 1.35;
   text-align: left;
   vertical-align: top;
 }
@@ -118,12 +125,27 @@ body {
 
 /* Output styling */
 .scroll-output {
-  position: relative;
-  padding: 20px;
+  position: absolute;
+  top: 20%;
+  left: 35%;
   width: 35%;
-  min-height: 500px;
+  height: 53%;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
   text-align: left;
-  vertical-align: top;
+}
+
+.scroll-message {
+  position: relative;
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+  overflow-wrap: anywhere;
+  padding: 4px;
+  font-family: "Great Vibes", cursive;
+  font-size: clamp(1.1rem, 3cqw, 2.5rem);
+  line-height: 1.35;
   background: linear-gradient(to right bottom,
       #003bfc 0%,
       #003bfc 30%,
@@ -138,10 +160,22 @@ body {
   animation: textShine 5s ease-in-out infinite;
 }
 
+.scroll-measure {
+  position: absolute;
+  inset: 0;
+  bottom: 10%;
+  box-sizing: border-box;
+  padding: 4px;
+  overflow: hidden;
+  visibility: hidden;
+  pointer-events: none;
+  font-family: inherit;
+}
+
 /* Arcane glowing text */
 .arcane-word {
   font-family: "Great Vibes", cursive;
-  font-size: 4em;
+  font-size: inherit;
   animation: shimmer 5s infinite;
 }
 
@@ -213,19 +247,18 @@ body {
 
 .try-again-button {
   opacity: 0;
-  position: absolute;
-  bottom: 0;
-  right: 0;
+  flex-shrink: 0;
+  align-self: flex-end;
   background: #00000000;
   -webkit-text-fill-color: #000;
   color: #000;
   font-family: "Great Vibes", cursive;
-  font-size: 2.5em;
-  padding: 10px 20px;
+  font-size: clamp(1.1rem, 2.5cqw, 2rem);
+  padding: 4px 8px;
   border: none;
   border-radius: 5px;
   cursor: pointer;
-  margin-top: 20px;
+  margin-top: 4px;
   animation: fadeIn 2.5s forwards;
   animation-delay: 5s;
 }
@@ -251,6 +284,47 @@ body {
   /* Hidden after fade-out */
 }
 
-.invisible-input {
-  visibility: hidden;
+@media (max-width: 700px) {
+  .cipher-app-container {
+    grid-template-columns: minmax(0, 1fr);
+    align-content: start;
+  }
+
+  .instructions {
+    padding: 12px 20px;
+  }
+
+  .instructions h2 {
+    margin: 0;
+    font-size: 2rem;
+  }
+
+  .instructions p {
+    margin: 8px 0;
+    font-size: 0.95rem;
+    line-height: 1.4;
+  }
+
+  .scroll-container {
+    aspect-ratio: 3 / 4;
+    background-position: 53% center;
+  }
+
+  .scroll-input-form,
+  .scroll-output {
+    left: 10%;
+    width: 80%;
+  }
+
+  .scroll-input {
+    font-size: clamp(1.35rem, 6cqw, 2rem);
+  }
+
+  .scroll-message {
+    font-size: clamp(1.1rem, 5cqw, 1.65rem);
+  }
+
+  .try-again-button {
+    font-size: clamp(1.1rem, 5cqw, 1.5rem);
+  }
 }

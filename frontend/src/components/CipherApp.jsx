@@ -1,5 +1,4 @@
-import { useState, useEffect, useRef } from "react";
-import { animate } from "motion"
+import { useState, useEffect, useLayoutEffect, useRef } from "react";
 import { motion } from "motion/react";
 import api from "../api/apiClient";
 
@@ -15,39 +14,62 @@ const toSentenceCase = (text) => {
 
 export default function CipherApp() {
   const [playerPhrase, setPlayerPhrase] = useState("");
-  const [encryptedMessage, setEncryptedMessage] = useState("");
-  const [decodedMessage, setDecodedMessage] = useState("");
   const [displayedWords, setDisplayedWords] = useState([]);
+  const [fullMessage, setFullMessage] = useState("");
   const [error, setError] = useState("");
   const [isInputVisible, setIsInputVisible] = useState(true); // Track input visibility
   const [transitionState, setTransitionState] = useState("visible"); // Track animation state
   const inputRef = useRef(null);
+  const outputRef = useRef(null);
+  const measureRef = useRef(null);
 
-  const InputForm = () => (
-    <form onKeyDown={handleSubmit} className={`scroll-input-form ${transitionState}`}>
-      <input
-        ref={inputRef}
-        type="text"
-        value={playerPhrase}
-        onChange={(e) => setPlayerPhrase(e.target.value)}
-        onLoad={() => inputRef.current.focus()}
-        placeholder="Write your passphrase..."
-        className="scroll-input"
-      />
-    </form>
-  );
+  useLayoutEffect(() => {
+    const output = outputRef.current;
+    const measure = measureRef.current;
+    if (!output || !measure || !fullMessage) return;
+
+    let active = true;
+    const fitMessage = () => {
+      if (!active || !output.clientWidth || !output.clientHeight) return;
+      // Start at the responsive CSS size, then shrink against the entire message.
+      // Measuring all words keeps the font steady throughout the reveal animation.
+      output.style.removeProperty("font-size");
+      const preferredSize = parseFloat(getComputedStyle(output).fontSize);
+      const fits = () => measure.scrollHeight <= measure.clientHeight &&
+        measure.scrollWidth <= measure.clientWidth;
+      if (fits()) return;
+
+      let lower = 1;
+      let upper = preferredSize;
+      for (let step = 0; step < 12; step += 1) {
+        const candidate = (lower + upper) / 2;
+        output.style.fontSize = `${candidate}px`;
+        if (fits()) lower = candidate;
+        else upper = candidate;
+      }
+      // Leave extra room for the script font's descenders and rounding differences.
+      output.style.fontSize = `${lower * 0.95}px`;
+    };
+
+    fitMessage();
+    const observer = new ResizeObserver(fitMessage);
+    observer.observe(output);
+    document.fonts.ready.then(fitMessage);
+    return () => {
+      active = false;
+      observer.disconnect();
+    };
+  }, [fullMessage]);
 
   useEffect(() => {
-    if (!inputRef.current.focus()) return;
-    inputRef.current.focus();
-  }, [InputForm]);
+    if (isInputVisible) inputRef.current?.focus();
+  }, [isInputVisible]);
 
   // Fetch the encrypted message when the component loads
   useEffect(() => {
     const fetchMessage = async () => {
       try {
-        const response = await api.get("/get-message");
-        setEncryptedMessage(response.data.encryptedMessage);
+        await api.get("/get-message");
       } catch (err) {
         console.error("Error fetching message:", err);
         setError("No message set yet.");
@@ -58,9 +80,9 @@ export default function CipherApp() {
 
   // Handle form submission (Enter key or button click)
   const handleSubmit = async (e) => {
-    if (e.key === "Enter") {
+    if (e.key === "Enter" && !e.nativeEvent.isComposing) {
       e.preventDefault();
-      if (!playerPhrase.trim()) return; // Prevent empty submissions
+      if (!playerPhrase.trim() || transitionState !== "visible") return;
 
       // Start fade-out animation
       setTransitionState("fading");
@@ -78,7 +100,7 @@ export default function CipherApp() {
             const formattedMessage = toSentenceCase(
               response.data.decryptedMessage
             );
-            setDecodedMessage(formattedMessage);
+            setFullMessage(formattedMessage);
 
             const words = formattedMessage.split(" ");
             setDisplayedWords([]);
@@ -89,7 +111,7 @@ export default function CipherApp() {
             });
           } catch (err) {
             console.error("Error decoding message:", err);
-            setDecodedMessage("Error decoding message.");
+            setFullMessage("Error decoding message.");
             setDisplayedWords(["Error", "decoding", "message."]);
           }
         }, 500); // Delay to allow fade-out to finish
@@ -113,9 +135,23 @@ export default function CipherApp() {
       {/* Scroll area */}
       <div className="scroll-container">
         {isInputVisible ? (
-          <InputForm />
+          <form onSubmit={(event) => event.preventDefault()} className={`scroll-input-form ${transitionState}`}>
+            <textarea
+              ref={inputRef}
+              value={playerPhrase}
+              onChange={(event) => setPlayerPhrase(event.target.value)}
+              onKeyDown={handleSubmit}
+              placeholder="Write your passphrase..."
+              aria-label="Arcane passphrase"
+              autoCapitalize="none"
+              rows={4}
+              className="scroll-input"
+            />
+          </form>
         ) : (
           <div className="scroll-output">
+            <div className="scroll-message" ref={outputRef} aria-label="Decoded scroll">
+              <div className="scroll-measure" ref={measureRef} aria-hidden="true">{fullMessage}</div>
             {displayedWords.map((word, index) => (
               <motion.span
                 key={index}
@@ -127,11 +163,7 @@ export default function CipherApp() {
                 {word}{" "}
               </motion.span>
             ))}
-            <input
-              className="invisible-input"
-              ref={inputRef}
-            >
-            </input>
+            </div>
             <button className="try-again-button" onClick={() => window.location.reload()}>Try Again</button>
           </div>
 
