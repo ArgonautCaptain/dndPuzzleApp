@@ -13,6 +13,13 @@ Perfect for immersive puzzles, mystery arcs, ancient prophecies, or cryptic tome
 
 ---
 
+## 🚀 Live Demo
+> https://dndpuzzleapp-g577.onrender.com/
+>
+> Note: Hosted on Render’s free tier. The first request after inactivity may take ~30–60 seconds while the backend spins up.
+
+---
+
 ## ✨ Features
 
 ### 🔐 **Custom Full-Word Substitution Cipher**
@@ -82,11 +89,6 @@ Instead, every incorrect guess generates a *plausible output* using your curated
 - Custom cryptographic dictionary-based encoder/decoder  
 - Real-time word validation  
 - Full message encryption/decryption pipeline
-
----
-
-## 🚀 Live Demo
-> https://dndpuzzleapp-g577.onrender.com/
 
 ---
 
