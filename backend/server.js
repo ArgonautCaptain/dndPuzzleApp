@@ -3,6 +3,7 @@ const express = require("express");
 const cors = require("cors");
 const fs = require("fs");
 const path = require("path");
+const { createHash } = require("node:crypto");
 const createDmAuth = require("./dmAuth");
 const { createPuzzleStore } = require("./puzzleStore");
 
@@ -83,7 +84,7 @@ function createApp({ store = createPuzzleStore(), dmPassword = process.env.DM_PA
 
   // Function to create a deterministic mapping from message words to dictionary words
   const generateWordMap = (messageWords, keyWords) => {
-    let availableWords = [...commonWords];
+    let availableWords = [...new Set(commonWords)];
     let mapping = {};
 
     messageWords.forEach((word, index) => {
@@ -106,7 +107,7 @@ function createApp({ store = createPuzzleStore(), dmPassword = process.env.DM_PA
 
   // Encrypt a message using word substitution
   const encryptMessage = (message, keyWords) => {
-    const words = message.split(" ");
+    const words = message.trim().split(/\s+/);
     const wordMap = generateWordMap(words, keyWords);
     return {
       wordMap,
@@ -193,7 +194,7 @@ function createApp({ store = createPuzzleStore(), dmPassword = process.env.DM_PA
       const decryptedMessage = decryptMessage(encryptedMessage, wordMap);
       res.json({ decryptedMessage });
     } else {
-      // Incorrect phrase, generate structured gibberish
+      // Incorrect guesses produce a stable substitution for this phrase and puzzle.
       if (commonWords.length === 0) {
         // fallback if dictionary missing
         return res.json({
@@ -202,9 +203,21 @@ function createApp({ store = createPuzzleStore(), dmPassword = process.env.DM_PA
       }
 
       const scrambledWords = encryptedMessage.split(" ");
+      // Different plaintexts can have the same ciphertext with this cipher.
+      // Sort mapping keys because JSONB storage can reorder object properties.
+      const sortedMapping = Object.entries(wordMap).sort(([left], [right]) =>
+        left < right ? -1 : left > right ? 1 : 0);
+      const puzzleSeed = createHash("sha256")
+        .update(JSON.stringify([encryptedMessage, sortedMapping])).digest("hex");
       const gibberish = scrambledWords
         .map(
-          () => commonWords[Math.floor(Math.random() * commonWords.length)]
+          (word) => {
+            const seed = JSON.stringify([
+              "arcane-wrong-guess-v1", phrase.toLowerCase(), puzzleSeed, word,
+            ]);
+            const index = createHash("sha256").update(seed).digest().readUInt32BE(0);
+            return commonWords[index % commonWords.length];
+          }
         )
         .join(" ");
 

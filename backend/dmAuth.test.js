@@ -107,6 +107,8 @@ test("Postgres puzzle survives backend recreation and replaces the current puzzl
   assert.equal(saved.status, 200);
   const ciphertext = (await first("/get-message")).data;
   assert.deepEqual(Object.keys(ciphertext), ["encryptedMessage"]);
+  const wrongBeforeRestart = await first("/decrypt", { phrase: "wrong guess" });
+  assert.equal(wrongBeforeRestart.status, 200);
   await first.close();
   await store.close();
 
@@ -118,6 +120,7 @@ test("Postgres puzzle survives backend recreation and replaces the current puzzl
   const decoded = await second("/decrypt", { phrase: "MOON Song" });
   assert.equal(decoded.status, 200);
   assert.equal(decoded.data.decryptedMessage, "the moon");
+  assert.deepEqual((await second("/decrypt", { phrase: "WRONG GUESS" })).data, wrongBeforeRestart.data);
   assert.equal((await second("/dm/session", undefined, login.data.token)).status, 401);
   const newLogin = await second("/dm/login", { password: dmPassword });
   assert.equal((await second("/set-message", { phrase: "sun", message: "the sun" }, newLogin.data.token)).status, 200);
@@ -175,4 +178,32 @@ test("Render without DATABASE_URL cannot silently save a temporary puzzle", asyn
     if (previousRender === undefined) delete process.env.RENDER;
     else process.env.RENDER = previousRender;
   }
+});
+
+test("Incorrect guesses are repeatable, case insensitive, and preserve repeated words", async (t) => {
+  const { createMemoryStore } = require("./puzzleStore");
+  const createApp = require("./server");
+  const dictionary = new Set(require("./dnd-words-updated.json").commonWords);
+  const request = await serve(t, createApp({ store: createMemoryStore(), dmPassword: "test-password" }));
+  const login = await request("/dm/login", { password: "test-password" });
+  assert.equal((await request("/set-message", {
+    phrase: "moon song", message: "the moon and the sun",
+  }, login.data.token)).status, 200);
+  const first = await request("/decrypt", { phrase: "wrong guess" });
+  assert.equal(first.status, 200);
+  const words = first.data.decryptedMessage.split(" ");
+  assert.equal(words.length, 5);
+  assert.equal(words[0], words[3]);
+  assert.ok(words.every((word) => dictionary.has(word)));
+  for (const phrase of ["wrong guess", "WRONG GUESS", "Wrong Guess", "wrong guess"]) {
+    assert.deepEqual((await request("/decrypt", { phrase })).data, first.data);
+  }
+  const anotherGuess = await request("/decrypt", { phrase: "other guess" });
+  assert.notDeepEqual(anotherGuess.data, first.data);
+  assert.equal((await request("/decrypt", { phrase: "MOON SONG" })).data.decryptedMessage, "the moon and the sun");
+  // Re-saving an identical puzzle must not introduce a random seed.
+  await request("/set-message", { phrase: "moon song", message: "the moon and the sun" }, login.data.token);
+  assert.deepEqual((await request("/decrypt", { phrase: "wrong guess" })).data, first.data);
+  await request("/set-message", { phrase: "moon song", message: "the sun and the moon" }, login.data.token);
+  assert.notDeepEqual((await request("/decrypt", { phrase: "wrong guess" })).data, first.data);
 });

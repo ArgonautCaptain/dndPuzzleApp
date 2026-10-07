@@ -56,6 +56,18 @@ Players see:
 This ensures that players cannot brute-force the system by assuming “wrong = gibberish.”  
 Instead, every incorrect guess generates a *plausible output* using your curated dictionary — immersive and deceptive.
 
+For a given saved puzzle and dictionary, incorrect guesses are deterministic:
+repeating the same phrase returns the same words, even after a backend restart.
+Letter case is ignored. Wrong guesses use a SHA-256-derived substitution based on
+the lowercase guess, saved puzzle (ciphertext and word mapping), and each encoded
+word, so repeated encoded words also repeat in the output. Changing the puzzle or
+dictionary can change these results. Outputs use dictionary words; grammatical
+sentences are not guaranteed.
+
+When saving a message, leading/trailing whitespace is removed and spaces, tabs,
+and newlines between words become single spaces. Encryption uses unique
+dictionary entries so distinct words do not collide because of duplicate entries.
+
 ---
 
 ## 🧠 How the Cipher Works (High-Level Overview)
