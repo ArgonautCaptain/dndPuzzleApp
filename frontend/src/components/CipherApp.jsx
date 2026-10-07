@@ -72,7 +72,9 @@ export default function CipherApp() {
         await api.get("/get-message");
       } catch (err) {
         console.error("Error fetching message:", err);
-        setError("No message set yet.");
+        setError(err.response?.status === 404
+          ? "No message set yet."
+          : "The scroll is temporarily unavailable. Please try again shortly.");
       }
     };
     fetchMessage();

@@ -173,6 +173,30 @@ If you want a visible DM navigation link, set `VITE_SHOW_DM_LINK=true` in the
 frontend environment and restart Vite or rebuild the frontend. The password is
 still required whether the link is visible or hidden.
 
+### Persistent puzzle storage on Render
+
+1. Create a Render Postgres database in the same region as the backend service.
+2. Copy its **Internal Database URL** into a backend environment variable named
+   `DATABASE_URL`. Keep the value private and out of GitHub and the frontend.
+3. Save and deploy the backend. It creates the `arcane_puzzle` table automatically
+   on the first puzzle read or save; no manual SQL setup is needed.
+4. Open `/dm` and save your puzzle. The database stores the arcane phrase,
+   encrypted message, and word mapping together. A new save replaces the current
+   puzzle. Backend restarts and deployments preserve it.
+
+The backend reads the current puzzle from the database for each player request.
+Database failures return a temporary-unavailable error; a failed save is never
+reported as successful. DM login sessions still expire on backend restarts.
+
+Local development without `DATABASE_URL` uses temporary in-memory storage.
+On Render, `DATABASE_URL` is required for puzzle access so the app cannot silently
+fall back to storage that disappears when the service sleeps.
+
+Render's free Postgres database expires after 30 days. If you replace it, update
+`DATABASE_URL`, redeploy, and re-enter the puzzle; the new table is created
+automatically. Existing database contents are not copied to the replacement.
+The backend's cold-start delay still applies independently of puzzle storage.
+
 Clone the repo, customize the dictionary, adjust the UI, or integrate it with other DM tools — it’s designed to be modular, lightweight, and easily themeable.
 
 If you'd like help adapting it to your worldbuilding or adding new cipher modes (runic, celestial, infernal, numerological, etc.) just open an issue or reach out!
