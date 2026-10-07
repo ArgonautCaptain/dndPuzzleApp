@@ -39,6 +39,60 @@ body {
   margin: 10px 0;
 }
 
+.dm-console {
+  box-sizing: border-box;
+  width: min(100vw, 760px);
+  margin: auto;
+  padding: 20px 20px 64px;
+  color: white;
+}
+
+.dm-editor {
+  max-width: 400px;
+  margin: auto;
+  text-align: center;
+}
+
+.dm-editor input,
+.dm-editor textarea {
+  box-sizing: border-box;
+}
+
+.attempt-log {
+  margin-top: 32px;
+  border-top: 1px solid #665a40;
+  padding-top: 12px;
+}
+
+.attempt-list {
+  list-style: none;
+  padding: 0;
+}
+
+.attempt-list li {
+  padding: 12px;
+  margin: 12px 0;
+  border: 1px solid #665a40;
+  border-radius: 6px;
+  overflow-wrap: anywhere;
+}
+
+.attempt-list p {
+  margin: 8px 0;
+}
+
+.attempt-summary {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: 8px;
+  color: #d9c79a;
+}
+
+.attempt-phrase {
+  white-space: pre-wrap;
+}
+
 .cipher-app-container {
   display: grid;
   grid-template-columns: minmax(180px, 22%) minmax(0, 1fr);

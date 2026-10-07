@@ -9,6 +9,12 @@ export default function DMPanel() {
   const [token, setToken] = useState("");
   const [password, setPassword] = useState("");
   const [busy, setBusy] = useState(false);
+  const [attempts, setAttempts] = useState([]);
+  const [logCursor, setLogCursor] = useState(null);
+  const [nextBefore, setNextBefore] = useState(null);
+  const [logRefresh, setLogRefresh] = useState(0);
+  const [logLoading, setLogLoading] = useState(false);
+  const [logError, setLogError] = useState("");
   const hasUppercasePhrase = secretPhrase !== secretPhrase.toLowerCase();
 
   const clearPanel = () => {
@@ -18,7 +24,52 @@ export default function DMPanel() {
     setMessage("");
     setInvalidWords([]);
     setStatus("");
+    setAttempts([]);
+    setLogCursor(null);
+    setNextBefore(null);
+    setLogError("");
   };
+
+  useEffect(() => {
+    if (!token) {
+      setAttempts([]);
+      setLogCursor(null);
+      setNextBefore(null);
+      setLogLoading(false);
+      return;
+    }
+    const controller = new AbortController();
+    const loadLog = async () => {
+      setLogLoading(true);
+      setLogError("");
+      try {
+        const response = await api.get("/dm/attempts", {
+          headers: { Authorization: `Bearer ${token}` },
+          params: logCursor ? { before: logCursor } : {},
+          signal: controller.signal,
+        });
+        if (controller.signal.aborted) return;
+        setAttempts((previous) => logCursor ? [...previous, ...response.data.attempts] : response.data.attempts);
+        setNextBefore(response.data.nextBefore);
+      } catch (error) {
+        if (controller.signal.aborted) return;
+        if (error.response?.status === 401) {
+          setToken("");
+          setSecretPhrase("");
+          setMessage("");
+          setAttempts([]);
+          setLogCursor(null);
+          setNextBefore(null);
+          setStatus("Your DM session expired. Unlock the panel again.");
+        }
+        setLogError(error.response?.data?.error || "Unable to load player attempts. Try refreshing the log.");
+      } finally {
+        if (!controller.signal.aborted) setLogLoading(false);
+      }
+    };
+    loadLog();
+    return () => controller.abort();
+  }, [token, logCursor, logRefresh]);
 
   const unlockPanel = async (event) => {
     event.preventDefault();
@@ -131,7 +182,8 @@ export default function DMPanel() {
   }
 
   return (
-    <div style={{ maxWidth: "400px", margin: "auto", textAlign: "center", padding: "20px", color: "white" }}>
+    <div className="dm-console">
+      <div className="dm-editor">
       <h2>DM Control Panel</h2>
       <button onClick={lockPanel} disabled={busy}>Lock panel</button>
 
@@ -174,6 +226,35 @@ export default function DMPanel() {
       </button>
 
       <p role="status">{status}</p>
+      </div>
+      <section className="attempt-log" aria-labelledby="attempt-log-heading">
+        <h2 id="attempt-log-heading">Player attempt log</h2>
+        <p>Newest first. History includes attempts on previously saved puzzles.</p>
+        <button disabled={logLoading} onClick={() => {
+          setLogCursor(null);
+          setLogRefresh((value) => value + 1);
+        }}>Refresh log</button>
+        {logError && <p role="alert">{logError}</p>}
+        {logLoading && <p role="status">Loading attempts…</p>}
+        {!logLoading && !logError && attempts.length === 0 && <p>No player attempts recorded yet.</p>}
+        <ol className="attempt-list">
+          {attempts.map((attempt) => (
+            <li key={attempt.id}>
+              <div className="attempt-summary">
+                <time dateTime={attempt.attemptedAt}>{new Date(attempt.attemptedAt).toLocaleString()}</time>
+                <strong>{attempt.correct === null ? "No puzzle set" : attempt.correct ? "Correct" : "Incorrect"}</strong>
+              </div>
+              <p><b>Input:</b> <span className="attempt-phrase">{attempt.input}</span></p>
+              {attempt.input !== attempt.normalizedInput && <p><b>Used as:</b> {attempt.normalizedInput}</p>}
+              {attempt.output !== null && <p><b>Output:</b> {attempt.output}</p>}
+            </li>
+          ))}
+        </ol>
+        {nextBefore !== null && <button disabled={logLoading} onClick={() => {
+          if (logCursor === nextBefore) setLogRefresh((value) => value + 1);
+          else setLogCursor(nextBefore);
+        }}>Load older attempts</button>}
+      </section>
     </div>
   );
 }

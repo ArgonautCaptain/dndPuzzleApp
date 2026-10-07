@@ -207,3 +207,78 @@ test("Incorrect guesses are repeatable, case insensitive, and preserve repeated 
   await request("/set-message", { phrase: "moon song", message: "the sun and the moon" }, login.data.token);
   assert.notDeepEqual((await request("/decrypt", { phrase: "wrong guess" })).data, first.data);
 });
+
+test("Player attempts record every submitted guess and are visible only to authenticated DMs", async (t) => {
+  const { createMemoryStore } = require("./puzzleStore");
+  const request = await serve(t, require("./server")({ store: createMemoryStore(), dmPassword: "test-password" }));
+  assert.equal((await request("/dm/attempts")).status, 401);
+  assert.equal((await request("/decrypt", { phrase: "Early Guess" })).status, 400);
+  const login = await request("/dm/login", { password: "test-password" });
+  const token = login.data.token;
+  assert.equal((await request("/set-message", { phrase: "moon", message: "the moon" }, token)).status, 200);
+  const wrong = await request("/decrypt", { phrase: "WRONG" });
+  assert.equal(wrong.status, 200);
+  assert.deepEqual(Object.keys(wrong.data), ["decryptedMessage"]);
+  await request("/decrypt", { phrase: "WRONG" });
+  const right = await request("/decrypt", { phrase: "MoOn" });
+  const log = await request("/dm/attempts", undefined, token);
+  assert.equal(log.status, 200);
+  assert.equal(log.data.attempts.length, 4);
+  const [correct, repeated, firstWrong, early] = log.data.attempts;
+  assert.equal(correct.input, "MoOn");
+  assert.equal(correct.normalizedInput, "moon");
+  assert.equal(correct.correct, true);
+  assert.equal(correct.output, right.data.decryptedMessage);
+  assert.ok(Number.isFinite(Date.parse(correct.attemptedAt)));
+  assert.equal(repeated.correct, false);
+  assert.equal(repeated.output, wrong.data.decryptedMessage);
+  assert.equal(firstWrong.output, repeated.output);
+  assert.notEqual(firstWrong.id, repeated.id);
+  assert.equal(early.correct, null);
+  assert.equal(early.input, "Early Guess");
+  assert.equal(early.output, null);
+  assert.equal(log.data.nextBefore, null);
+  // Invalid submissions and DM login credentials must not appear in the log.
+  await request("/decrypt", { phrase: " " });
+  assert.equal((await request("/dm/attempts", undefined, token)).data.attempts.length, 4);
+  await request("/dm/logout", {}, token);
+  assert.equal((await request("/dm/attempts", undefined, token)).status, 401);
+});
+
+test("Postgres attempt history survives recreation and paginates without duplicate entries", async (t) => {
+  const { newDb } = require("pg-mem");
+  const { createPostgresStore } = require("./puzzleStore");
+  const { Pool } = newDb({ noAstCoverageCheck: true }).adapters.createPg();
+  const store = createPostgresStore(new Pool());
+  for (let index = 0; index < 55; index += 1) {
+    await store.recordAttempt({ input: `Guess ${index}`, normalizedInput: `guess ${index}`, correct: false, output: "the moon" });
+  }
+  await store.close();
+  const reopened = createPostgresStore(new Pool());
+  t.after(() => reopened.close());
+  const request = await serve(t, require("./server")({ store: reopened, dmPassword: "test-password" }));
+  const token = (await request("/dm/login", { password: "test-password" })).data.token;
+  const first = (await request("/dm/attempts", undefined, token)).data;
+  assert.equal(first.attempts.length, 50);
+  assert.equal(first.attempts[0].input, "Guess 54");
+  const older = (await request(`/dm/attempts?before=${first.nextBefore}`, undefined, token)).data;
+  assert.equal(older.attempts.length, 5);
+  assert.equal(older.nextBefore, null);
+  assert.equal(new Set([...first.attempts, ...older.attempts].map((entry) => entry.id)).size, 55);
+  for (const cursor of ["0", "-1", "abc", "1.5", "2147483648"]) {
+    assert.equal((await request(`/dm/attempts?before=${cursor}`, undefined, token)).status, 400);
+  }
+  await request("/set-message", { phrase: "sun", message: "the sun" }, token);
+  assert.equal((await request("/dm/attempts", undefined, token)).data.attempts.length, 50);
+});
+
+test("A failed log write returns an error instead of an unlogged result", async (t) => {
+  const { createMemoryStore } = require("./puzzleStore");
+  const store = createMemoryStore();
+  store.recordAttempt = async () => { throw new Error("log write failed"); };
+  const request = await serve(t, require("./server")({ store, dmPassword: "test-password" }));
+  const token = (await request("/dm/login", { password: "test-password" })).data.token;
+  await request("/set-message", { phrase: "moon", message: "the moon" }, token);
+  assert.equal((await request("/decrypt", { phrase: "moon" })).status, 503);
+  assert.equal((await request("/decrypt", { phrase: "wrong" })).status, 503);
+});

@@ -209,6 +209,21 @@ Render's free Postgres database expires after 30 days. If you replace it, update
 automatically. Existing database contents are not copied to the replacement.
 The backend's cold-start delay still applies independently of puzzle storage.
 
+### Player attempt log
+
+Each nonempty player passphrase submitted to the backend is recorded with its
+original spelling, lowercase form, timestamp, correctness, and returned output.
+Guesses made before a puzzle is saved are marked **No puzzle set**. Invalid API
+payloads, DM login passwords, and unsent typing are not recorded. If storage is
+unavailable, the request reports an error instead of returning an unlogged decode.
+
+Unlock `/dm` to see **Player attempt log**. Use **Refresh log** for the latest
+attempts and **Load older attempts** to page through history. The log is private
+to authenticated DMs and remains across puzzle updates and backend restarts.
+The `arcane_attempt` table is created automatically in the existing database;
+no additional Render variables or manual SQL setup are needed. Replacing or
+expiring the database also loses its attempt history.
+
 Clone the repo, customize the dictionary, adjust the UI, or integrate it with other DM tools — it’s designed to be modular, lightweight, and easily themeable.
 
 If you'd like help adapting it to your worldbuilding or adding new cipher modes (runic, celestial, infernal, numerological, etc.) just open an issue or reach out!

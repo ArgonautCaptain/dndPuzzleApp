@@ -174,6 +174,16 @@ function createApp({ store = createPuzzleStore(), dmPassword = process.env.DM_PA
   }));
 
   // API to attempt decryption
+  app.get("/dm/attempts", dmAuth.requireDm, storedRoute(async (req, res) => {
+    const before = req.query.before === undefined ? undefined : Number(req.query.before);
+    if (before !== undefined && (typeof req.query.before !== "string" || !/^\d{1,10}$/.test(req.query.before) || !Number.isInteger(before) || before <= 0 || before > 2147483647)) {
+      return res.status(400).json({ error: "Invalid log cursor." });
+    }
+    const rows = await store.listAttempts(before);
+    const attempts = rows.slice(0, 50);
+    res.json({ attempts, nextBefore: rows.length > 50 ? attempts[attempts.length - 1].id : null });
+  }));
+
   app.post("/decrypt", storedRoute(async (req, res) => {
     res.set("Cache-Control", "no-store");
     const { phrase } = req.body;
@@ -182,6 +192,7 @@ function createApp({ store = createPuzzleStore(), dmPassword = process.env.DM_PA
     }
     const puzzle = await store.read();
     if (!puzzle) {
+      await store.recordAttempt({ input: phrase, normalizedInput: phrase.toLowerCase(), correct: null, output: null });
       return res.status(400).json({ error: "Missing data for decryption." });
     }
     const { secretPhrase, encryptedMessage, wordMap } = puzzle;
@@ -189,17 +200,19 @@ function createApp({ store = createPuzzleStore(), dmPassword = process.env.DM_PA
     const inputPhrase = phrase.toLowerCase().split(" ");
     const isCorrect =
       JSON.stringify(inputPhrase) === JSON.stringify(secretPhrase);
+    const respondWithResult = async (decryptedMessage) => {
+      await store.recordAttempt({ input: phrase, normalizedInput: phrase.toLowerCase(), correct: isCorrect, output: decryptedMessage });
+      res.json({ decryptedMessage });
+    };
 
     if (isCorrect) {
       const decryptedMessage = decryptMessage(encryptedMessage, wordMap);
-      res.json({ decryptedMessage });
+      await respondWithResult(decryptedMessage);
     } else {
       // Incorrect guesses produce a stable substitution for this phrase and puzzle.
       if (commonWords.length === 0) {
         // fallback if dictionary missing
-        return res.json({
-          decryptedMessage: "The magic fails; the message remains obscured.",
-        });
+        return respondWithResult("The magic fails; the message remains obscured.");
       }
 
       const scrambledWords = encryptedMessage.split(" ");
@@ -221,7 +234,7 @@ function createApp({ store = createPuzzleStore(), dmPassword = process.env.DM_PA
         )
         .join(" ");
 
-      res.json({ decryptedMessage: gibberish });
+      await respondWithResult(gibberish);
     }
   }));
 
